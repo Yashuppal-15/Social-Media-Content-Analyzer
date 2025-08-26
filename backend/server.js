@@ -5,8 +5,9 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-// Import PDF service
+// Import services
 const { extractTextFromPDF, isValidPDF } = require('./services/pdfService');
+const { extractTextFromImage, isValidImage } = require('./services/ocrService');
 
 const app = express();
 
@@ -65,8 +66,12 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       health: '/health',
-      upload: '/api/upload',
       extract: '/api/extract'
+    },
+    features: {
+      pdfProcessing: true,
+      ocrProcessing: true,
+      supportedFormats: ['PDF', 'JPG', 'PNG']
     }
   });
 });
@@ -75,11 +80,15 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
     uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    services: {
+      pdfParser: 'available',
+      ocrEngine: 'available'
+    }
   });
 });
 
-// Upload and extract endpoint - combines upload with processing
+// Main extraction endpoint - handles both PDF and images
 app.post('/api/extract', async (req, res) => {
   upload.single('file')(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
@@ -118,16 +127,12 @@ app.post('/api/extract', async (req, res) => {
         extractionResult.type = 'pdf';
         
       } else if (req.file.mimetype.startsWith('image/')) {
-        console.log('🖼️ Image file detected - OCR not implemented yet');
-        extractionResult = {
-          success: false,
-          error: 'OCR processing not yet implemented',
-          message: 'Image OCR will be available in Day 4',
-          type: 'image'
-        };
+        console.log('🖼️ Processing image file with OCR...');
+        extractionResult = await extractTextFromImage(filePath);
+        extractionResult.type = 'image';
       }
 
-      // Clean up uploaded file
+      // Clean up uploaded file after processing
       fs.unlinkSync(filePath);
 
       // Log successful extraction
@@ -135,7 +140,8 @@ app.post('/api/extract', async (req, res) => {
         console.log('✅ Text extraction completed:', {
           type: extractionResult.type,
           words: extractionResult.stats?.words || 0,
-          characters: extractionResult.stats?.characters || 0
+          characters: extractionResult.stats?.characters || 0,
+          confidence: extractionResult.ocr?.confidence || 'N/A'
         });
       }
 
@@ -154,6 +160,7 @@ app.post('/api/extract', async (req, res) => {
 
       console.error('❌ Extraction error:', error.message);
       res.status(500).json({
+        success: false,
         error: 'Text extraction failed',
         message: error.message,
         type: req.file.mimetype.startsWith('image/') ? 'image' : 'pdf'
@@ -162,7 +169,7 @@ app.post('/api/extract', async (req, res) => {
   });
 });
 
-// Keep the old upload endpoint for basic uploads (optional)
+// Legacy upload endpoint (for basic file uploads without processing)
 app.post('/api/upload', (req, res) => {
   upload.single('file')(req, res, (err) => {
     if (err) {
@@ -205,5 +212,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API URL: http://localhost:${PORT}`);
-  console.log(`📄 Extract endpoint: http://localhost:${PORT}/api/extract`);
+  console.log(`📄 PDF Processing: ✅ Available`);
+  console.log(`🖼️ OCR Processing: ✅ Available`);
+  console.log(`📁 Extract endpoint: http://localhost:${PORT}/api/extract`);
 });

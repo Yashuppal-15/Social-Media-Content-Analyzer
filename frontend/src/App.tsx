@@ -3,12 +3,33 @@ import FileUpload from './components/FileUpload';
 import ResultsDisplay from './components/ResultsDisplay';
 import './App.css';
 
+interface ExtractionStats {
+  characters: number;
+  charactersNoSpaces: number;
+  words: number;
+  lines: number;
+  paragraphs: number;
+}
+
+interface OCRMetadata {
+  confidence: number;
+  meanConfidence: number;
+  wordCount: number;
+  recognizedWords: number;
+  lowConfidenceWords: number;
+}
+
 interface ExtractionResult {
   success: boolean;
   text?: string;
   type: 'pdf' | 'image';
-  metadata?: any;
-  stats?: any;
+  metadata?: {
+    pages?: number;
+    info?: any;
+    version?: string;
+  };
+  stats?: ExtractionStats;
+  ocr?: OCRMetadata;
   error?: string;
   message?: string;
   originalFilename?: string;
@@ -124,7 +145,7 @@ function App() {
           <p className="subtitle">Transform your documents into actionable insights</p>
           
           <div className="feature-badge floating">
-            PDF Text Extraction Available
+            PDF + OCR Processing Available
           </div>
 
           <div className="connection-section">
@@ -156,12 +177,12 @@ function App() {
           <div className="feature-card">
             <span className="feature-icon">🖼️</span>
             <h3>OCR Technology</h3>
-            <p>Coming soon: Extract text from images and scanned documents using advanced OCR</p>
+            <p>Extract text from images and scanned documents using advanced Tesseract OCR engine</p>
           </div>
           <div className="feature-card">
             <span className="feature-icon">📊</span>
             <h3>Smart Analysis</h3>
-            <p>Get engagement suggestions and content optimization recommendations</p>
+            <p>Get confidence scores, accuracy metrics, and content optimization recommendations</p>
           </div>
         </div>
 
