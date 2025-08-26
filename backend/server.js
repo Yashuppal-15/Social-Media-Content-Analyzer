@@ -8,6 +8,7 @@ require('dotenv').config();
 // Import services
 const { extractTextFromPDF, isValidPDF } = require('./services/pdfService');
 const { extractTextFromImage, isValidImage } = require('./services/ocrService');
+const { analyzeEngagement } = require('./services/engagementService');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.get('/', (req, res) => {
     features: {
       pdfProcessing: true,
       ocrProcessing: true,
+      engagementAnalysis: true,
       supportedFormats: ['PDF', 'JPG', 'PNG']
     }
   });
@@ -83,7 +85,8 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       pdfParser: 'available',
-      ocrEngine: 'available'
+      ocrEngine: 'available',
+      engagementAnalyzer: 'available'
     }
   });
 });
@@ -132,6 +135,12 @@ app.post('/api/extract', async (req, res) => {
         extractionResult.type = 'image';
       }
 
+      // Add engagement analysis if extraction was successful
+      if (extractionResult.success && extractionResult.text) {
+        console.log('📊 Analyzing content for engagement...');
+        extractionResult.engagement = analyzeEngagement(extractionResult.text, extractionResult.type);
+      }
+
       // Clean up uploaded file after processing
       fs.unlinkSync(filePath);
 
@@ -141,7 +150,8 @@ app.post('/api/extract', async (req, res) => {
           type: extractionResult.type,
           words: extractionResult.stats?.words || 0,
           characters: extractionResult.stats?.characters || 0,
-          confidence: extractionResult.ocr?.confidence || 'N/A'
+          confidence: extractionResult.ocr?.confidence || 'N/A',
+          engagementScore: extractionResult.engagement?.score || 'N/A'
         });
       }
 
@@ -214,5 +224,6 @@ app.listen(PORT, () => {
   console.log(`📡 API URL: http://localhost:${PORT}`);
   console.log(`📄 PDF Processing: ✅ Available`);
   console.log(`🖼️ OCR Processing: ✅ Available`);
+  console.log(`📊 Engagement Analysis: ✅ Available`);
   console.log(`📁 Extract endpoint: http://localhost:${PORT}/api/extract`);
 });
