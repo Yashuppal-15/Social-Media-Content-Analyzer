@@ -6,17 +6,31 @@ const fs = require('fs');
 require('dotenv').config();
 
 // Import services
-const { extractTextFromPDF, isValidPDF } = require('./services/pdfService');
-const { extractTextFromImage, isValidImage } = require('./services/ocrService');
+const { extractTextFromPDF } = require('./services/pdfService');
+const { extractTextFromImage } = require('./services/ocrService');
 const { analyzeEngagement } = require('./services/engagementService');
 
 const app = express();
 
-// Middleware
+// Configure CORS to allow both local dev and production origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // allow requests with no origin (e.g., curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy: origin ${origin} not allowed`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -39,11 +53,10 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     'application/pdf',
-    'image/jpeg', 
+    'image/jpeg',
     'image/jpg',
     'image/png'
   ];
-  
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -52,23 +65,18 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: fileFilter
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter
 });
 
 // Basic routes
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Social Media Content Analyzer API',
     status: 'running',
     timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/health',
-      extract: '/api/extract'
-    },
+    endpoints: { health: '/health', extract: '/api/extract' },
     features: {
       pdfProcessing: true,
       ocrProcessing: true,
@@ -79,7 +87,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -91,60 +99,40 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Main extraction endpoint - handles both PDF and images
-app.post('/api/extract', async (req, res) => {
+// Main extraction endpoint
+app.post('/api/extract', (req, res) => {
   upload.single('file')(req, res, async (err) => {
-    if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          error: 'File too large',
-          message: 'File size exceeds 10MB limit'
-        });
+    if (err) {
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large', message: 'File size exceeds 10MB limit' });
       }
-      return res.status(400).json({
-        error: 'Upload error',
-        message: err.message
-      });
-    } else if (err) {
-      return res.status(400).json({
-        error: 'File validation error',
-        message: err.message
-      });
+      return res.status(400).json({ error: 'Upload error', message: err.message });
     }
-
     if (!req.file) {
-      return res.status(400).json({
-        error: 'No file uploaded',
-        message: 'Please select a file to upload'
-      });
+      return res.status(400).json({ error: 'No file uploaded', message: 'Please select a file to upload' });
     }
 
     try {
       let extractionResult = {};
       const filePath = req.file.path;
 
-      // Process based on file type
       if (req.file.mimetype === 'application/pdf') {
         console.log('📄 Processing PDF file...');
         extractionResult = await extractTextFromPDF(filePath);
         extractionResult.type = 'pdf';
-        
-      } else if (req.file.mimetype.startsWith('image/')) {
+      } else {
         console.log('🖼️ Processing image file with OCR...');
         extractionResult = await extractTextFromImage(filePath);
         extractionResult.type = 'image';
       }
 
-      // Add engagement analysis if extraction was successful
       if (extractionResult.success && extractionResult.text) {
         console.log('📊 Analyzing content for engagement...');
         extractionResult.engagement = analyzeEngagement(extractionResult.text, extractionResult.type);
       }
 
-      // Clean up uploaded file after processing
       fs.unlinkSync(filePath);
 
-      // Log successful extraction
       if (extractionResult.success) {
         console.log('✅ Text extraction completed:', {
           type: extractionResult.type,
@@ -155,67 +143,33 @@ app.post('/api/extract', async (req, res) => {
         });
       }
 
-      res.json({
-        ...extractionResult,
-        originalFilename: req.file.originalname,
-        fileSize: req.file.size,
-        processedAt: new Date().toISOString()
-      });
-
+      res.json({ ...extractionResult, originalFilename: req.file.originalname, fileSize: req.file.size, processedAt: new Date().toISOString() });
     } catch (error) {
-      // Clean up file on error
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       console.error('❌ Extraction error:', error.message);
-      res.status(500).json({
-        success: false,
-        error: 'Text extraction failed',
-        message: error.message,
-        type: req.file.mimetype.startsWith('image/') ? 'image' : 'pdf'
-      });
+      res.status(500).json({ success: false, error: 'Text extraction failed', message: error.message, type: req.file.mimetype.startsWith('image/') ? 'image' : 'pdf' });
     }
   });
 });
 
-// Legacy upload endpoint (for basic file uploads without processing)
+// Legacy upload endpoint
 app.post('/api/upload', (req, res) => {
   upload.single('file')(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    res.json({
-      success: true,
-      message: 'File uploaded successfully!',
-      filename: req.file.filename,
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size
-    });
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({ success: true, message: 'File uploaded successfully!', filename: req.file.filename, originalname: req.file.originalname, mimetype: req.file.mimetype, size: req.file.size });
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: err.message,
-    timestamp: new Date().toISOString()
-  });
+  res.status(500).json({ error: 'Something went wrong!', message: err.message, timestamp: new Date().toISOString() });
 });
 
-// Handle 404
+// 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    message: `${req.method} ${req.originalUrl} not found`
-  });
+  res.status(404).json({ error: 'Route not found', message: `${req.method} ${req.originalUrl} not found` });
 });
 
 const PORT = process.env.PORT || 5000;
