@@ -6,7 +6,7 @@ A modern, **AI-powered** web application that extracts and analyzes text from PD
 
 ## 🌐 Live Demo
 
-[https://your-app-name.vercel.app](https://your-app-name.vercel.app)
+[https://social-media-content-analyzer-gray.vercel.app](https://social-media-content-analyzer-gray.vercel.app)
 
 ---
 
@@ -163,5 +163,5 @@ social-media-content-analyzer/
 
 ---
 
-Made with ❤️ by YASH UPPAL | GitHub: [Yashuppal-15](https://github.com/Yashuppal-15) | LinkedIn: [Your Profile]  
+Made with ❤️ by YASH UPPAL | GitHub: [Yashuppal-15](https://github.com/Yashuppal-15) | LinkedIn: https://www.linkedin.com/in/yashuppal15
 
