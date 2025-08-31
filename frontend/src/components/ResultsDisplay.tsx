@@ -95,257 +95,184 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onClear }) => 
   };
 
   const showNotification = (message: string, type: 'success' | 'error') => {
-    // Simple notification - you can enhance this later
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
     notification.textContent = message;
     notification.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 30px;
+      right: 30px;
+      background: ${type === 'success' ? 'linear-gradient(135deg, #22c55e, #34D399)' : 'linear-gradient(135deg, #ef4444, #f87171)'};
+      color: white;
       padding: 16px 24px;
       border-radius: 12px;
-      color: white;
-      font-weight: 500;
-      z-index: 1000;
-      animation: slideIn 0.3s ease;
-      background: ${type === 'success' ? '#4CAF50' : '#f44336'};
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      z-index: 10000;
+      font-weight: 600;
+      animation: slideInRight 0.4s ease;
     `;
     document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
+    setTimeout(() => notification.remove(), 3000);
   };
 
   const formatFileSize = (bytes: number) => {
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return '#10B981';
-    if (score >= 60) return '#F59E0B';
-    return '#EF4444';
-  };
-
-  const getScoreGradient = (score: number) => {
-    if (score >= 80) return 'linear-gradient(135deg, #10B981, #34D399)';
-    if (score >= 60) return 'linear-gradient(135deg, #F59E0B, #FBBF24)';
-    return 'linear-gradient(135deg, #EF4444, #F87171)';
-  };
-
   if (!results.success) {
     return (
-      <div className="modern-results-container error">
-        <div className="modern-header">
-          <div className="error-icon">⚠️</div>
-          <div className="header-text">
-            <h2>Processing Failed</h2>
-            <p>{results.message || results.error}</p>
+      <div className="results-container">
+        <div className="panel error-panel">
+          <div className="panel-header">
+            <div className="panel-title">❌ Processing Failed</div>
+            <button className="btn" onClick={onClear}>Close</button>
           </div>
-          <button onClick={onClear} className="close-btn">✕</button>
+          <div className="panel-body">
+            <div className="error-message">{results.message || results.error}</div>
+            <div className="error-details">
+              <p><strong>File:</strong> {results.originalFilename}</p>
+              <p><strong>Type:</strong> {results.type?.toUpperCase()}</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="modern-results-container">
-      {/* Modern Header */}
-      <div className="modern-header">
-        <div className="success-icon">✅</div>
-        <div className="header-text">
-          <h2>Analysis Complete</h2>
-          <p>Your {results.type.toUpperCase()} file has been processed successfully</p>
+    <div className="results-container">
+      <div className="panel">
+        <div className="panel-header">
+          <div className="panel-title">✅ Analysis Complete</div>
+          <button className="btn" onClick={onClear}>Close</button>
         </div>
-        <button onClick={onClear} className="close-btn">✕</button>
-      </div>
-
-      {/* Main Dashboard */}
-      <div className="dashboard-grid">
-        
-        {/* Metrics Row */}
-        <div className="metrics-row">
-          {results.stats && (
-            <>
-              <div className="metric-card primary">
-                <div className="metric-icon">📝</div>
-                <div className="metric-content">
-                  <div className="metric-value">{results.stats.words.toLocaleString()}</div>
-                  <div className="metric-label">Words</div>
-                </div>
-              </div>
-              
-              <div className="metric-card secondary">
-                <div className="metric-icon">🔤</div>
-                <div className="metric-content">
-                  <div className="metric-value">{results.stats.characters.toLocaleString()}</div>
-                  <div className="metric-label">Characters</div>
-                </div>
-              </div>
-              
-              <div className="metric-card accent">
-                <div className="metric-icon">📄</div>
-                <div className="metric-content">
-                  <div className="metric-value">{results.stats.paragraphs}</div>
-                  <div className="metric-label">Paragraphs</div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* OCR Confidence for Images */}
-          {results.type === 'image' && results.ocr && (
-            <div className="metric-card confidence">
-              <div className="metric-icon">🎯</div>
-              <div className="metric-content">
-                <div className="metric-value">{results.ocr.confidence}%</div>
-                <div className="metric-label">OCR Confidence</div>
-              </div>
-            </div>
-          )}
-
-          {/* Engagement Score */}
-          {results.engagement && (
-            <div className="metric-card engagement">
-              <div className="engagement-circle">
-                <svg className="progress-ring" width="50" height="50">
-                  <circle
-                    className="progress-ring-background"
-                    cx="25"
-                    cy="25"
-                    r="20"
-                    fill="transparent"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    className="progress-ring-progress"
-                    cx="25"
-                    cy="25"
-                    r="20"
-                    fill="transparent"
-                    stroke={getScoreColor(results.engagement.score)}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 20}`}
-                    strokeDashoffset={`${2 * Math.PI * 20 * (1 - results.engagement.score / 100)}`}
-                    transform="rotate(-90 25 25)"
-                  />
-                </svg>
-                <div className="score-text">{results.engagement.score}</div>
-              </div>
-              <div className="metric-content">
-                <div className="metric-value">{results.engagement.grade}</div>
-                <div className="metric-label">Engagement</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Content Section */}
-        <div className="content-grid">
+        <div className="panel-body">
           
-          {/* Extracted Text Panel */}
-          <div className="content-panel main-content">
-            <div className="panel-header">
-              <div className="panel-title">
-                <span className="panel-icon">📄</span>
-                <h3>Extracted Content</h3>
+          {/* KPI Row */}
+          <div className="kpi-row">
+            {results.stats && (
+              <>
+                <div className="kpi">
+                  <div className="kpi-value">{results.stats.words.toLocaleString()}</div>
+                  <div className="kpi-label">Words</div>
+                </div>
+                <div className="kpi">
+                  <div className="kpi-value">{results.stats.characters.toLocaleString()}</div>
+                  <div className="kpi-label">Characters</div>
+                </div>
+                <div className="kpi">
+                  <div className="kpi-value">{results.stats.paragraphs}</div>
+                  <div className="kpi-label">Paragraphs</div>
+                </div>
+              </>
+            )}
+            {results.type === 'image' && results.ocr && (
+              <div className="kpi">
+                <div className="kpi-value">{results.ocr.confidence}%</div>
+                <div className="kpi-label">OCR Confidence</div>
               </div>
-              <div className="panel-actions">
-                <button onClick={copyToClipboard} className="action-btn primary">
-                  <span className="btn-icon">📋</span>
-                  Copy
-                </button>
-                <button onClick={downloadText} className="action-btn secondary">
-                  <span className="btn-icon">📥</span>
-                  Download
-                </button>
+            )}
+            {results.engagement && (
+              <div className="kpi">
+                <div className="kpi-value">{results.engagement.score}</div>
+                <div className="kpi-label">Engagement</div>
               </div>
-            </div>
-            
-            <div className="text-container">
-              <div className="text-content">
-                {results.text || 'No text content extracted'}
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Insights Panel */}
-          <div className="content-panel insights">
-            <div className="panel-header">
-              <div className="panel-title">
-                <span className="panel-icon">💡</span>
-                <h3>Smart Insights</h3>
+          {/* Main Content Grid */}
+          <div className="results-grid">
+            
+            {/* Extracted Content Panel */}
+            <div className="panel">
+              <div className="panel-header">
+                <div className="panel-title">📄 Extracted Content</div>
+                <div className="action-row">
+                  <button className="btn primary" onClick={copyToClipboard}>
+                    📋 Copy
+                  </button>
+                  <button className="btn" onClick={downloadText}>
+                    📥 Download
+                  </button>
+                </div>
+              </div>
+              <div className="panel-body">
+                <pre className="text-box">{results.text || 'No text extracted'}</pre>
               </div>
             </div>
-            
-            <div className="insights-content">
-              
-              {/* File Info */}
-              <div className="insight-section">
-                <h4>File Details</h4>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <span className="info-key">Name:</span>
-                    <span className="info-value">{results.originalFilename}</span>
+
+            {/* Smart Insights Panel */}
+            <div className="panel">
+              <div className="panel-header">
+                <div className="panel-title">💡 Smart Insights</div>
+              </div>
+              <div className="panel-body">
+                <div className="insights">
+                  
+                  {/* File Details */}
+                  <div className="insight-card">
+                    <div className="insight-header">📁 File Details</div>
+                    <div className="insight-content">
+                      <div className="detail-row">
+                        <span>Name:</span>
+                        <span>{results.originalFilename}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span>Size:</span>
+                        <span>{results.fileSize ? formatFileSize(results.fileSize) : 'Unknown'}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span>Type:</span>
+                        <span>{results.type.toUpperCase()}</span>
+                      </div>
+                      {results.metadata?.pages && (
+                        <div className="detail-row">
+                          <span>Pages:</span>
+                          <span>{results.metadata.pages}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="info-item">
-                    <span className="info-key">Size:</span>
-                    <span className="info-value">{results.fileSize ? formatFileSize(results.fileSize) : 'Unknown'}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-key">Type:</span>
-                    <span className="info-value">{results.type.toUpperCase()}</span>
-                  </div>
-                  {results.metadata?.pages && (
-                    <div className="info-item">
-                      <span className="info-key">Pages:</span>
-                      <span className="info-value">{results.metadata.pages}</span>
+
+                  {/* Content Analysis */}
+                  {results.engagement && (
+                    <div className="insight-card">
+                      <div className="insight-header">📊 Content Analysis</div>
+                      <div className="insight-content">
+                        <div className="analysis-item">
+                          <span className="analysis-icon">🏷️</span>
+                          <span>{results.engagement.analysis.hashtags.found} hashtags detected</span>
+                        </div>
+                        <div className="analysis-item">
+                          <span className="analysis-icon">👆</span>
+                          <span>{results.engagement.analysis.callToAction.found ? 'Call-to-action present' : 'No call-to-action found'}</span>
+                        </div>
+                        <div className="analysis-item">
+                          <span className="analysis-icon">📏</span>
+                          <span>Length: {results.engagement.analysis.length.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommendations */}
+                  {results.engagement && results.engagement.suggestions.length > 0 && (
+                    <div className="insight-card">
+                      <div className="insight-header">🎯 Recommendations</div>
+                      <div className="insight-content">
+                        {results.engagement.suggestions.slice(0, 3).map((suggestion: EngagementSuggestion, index: number) => (
+                          <div key={index} className={`suggestion priority-${suggestion.priority}`}>
+                            <div className="suggestion-header">
+                              <span className="suggestion-icon">{suggestion.icon}</span>
+                              <span className="suggestion-title">{suggestion.title}</span>
+                            </div>
+                            <div className="suggestion-desc">{suggestion.description}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* Engagement Analysis */}
-              {results.engagement && (
-                <div className="insight-section">
-                  <h4>Content Analysis</h4>
-                  <div className="analysis-grid">
-                    <div className="analysis-item">
-                      <span className="analysis-icon">🏷️</span>
-                      <span className="analysis-text">{results.engagement.analysis.hashtags.found} hashtags detected</span>
-                    </div>
-                    <div className="analysis-item">
-                      <span className="analysis-icon">👆</span>
-                      <span className="analysis-text">{results.engagement.analysis.callToAction.found ? 'Call-to-action present' : 'No call-to-action found'}</span>
-                    </div>
-                    <div className="analysis-item">
-                      <span className="analysis-icon">📏</span>
-                      <span className="analysis-text">Content length: {results.engagement.analysis.length.status}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Optimization Suggestions */}
-              {results.engagement && results.engagement.suggestions.length > 0 && (
-                <div className="insight-section">
-                  <h4>Recommendations</h4>
-                  <div className="suggestions-list">
-                    {results.engagement.suggestions.slice(0, 3).map((suggestion: EngagementSuggestion, index: number) => (
-                      <div key={index} className={`suggestion-item ${suggestion.priority}`}>
-                        <div className="suggestion-header">
-                          <span className="suggestion-icon">{suggestion.icon}</span>
-                          <span className="suggestion-title">{suggestion.title}</span>
-                        </div>
-                        <p className="suggestion-desc">{suggestion.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

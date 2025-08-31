@@ -5,14 +5,13 @@ import './FileUpload.css';
 interface FileUploadProps {
   onFileUpload: (file: File) => void;
   isUploading: boolean;
+  progress?: number;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, isUploading }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, isUploading, progress = 0 }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
-    // Handle rejected files
     if (rejectedFiles.length > 0) {
       const rejection = rejectedFiles[0];
       let errorMessage = 'File rejected: ';
@@ -25,27 +24,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, isUploading }) =>
         errorMessage += 'Unknown error';
       }
       
-      alert(errorMessage);
+      showNotification(errorMessage, 'error');
       return;
     }
 
-    // Handle accepted file
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       console.log('File selected:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      
-      // Simulate upload progress
-      setUploadProgress(0);
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-      
       onFileUpload(file);
     }
   }, [onFileUpload]);
@@ -64,63 +49,79 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, isUploading }) =>
     onDragLeave: () => setDragActive(false)
   });
 
-  // Reset progress when not uploading
-  React.useEffect(() => {
-    if (!isUploading) {
-      setUploadProgress(0);
-    }
-  }, [isUploading]);
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    const notification = document.createElement('div');
+    notification.className = `upload-notification ${type}`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <span class="notification-message">${message}</span>
+      </div>
+    `;
+    
+    notification.style.cssText = `
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      background: ${type === 'success'
+        ? 'linear-gradient(135deg, #22c55e, #34D399)'
+        : 'linear-gradient(135deg, #ef4444, #f87171)'};
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      z-index: 10000;
+      animation: slideInRight 0.4s ease;
+      max-width: 350px;
+      font-weight: 600;
+    `;
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 4000);
+  };
 
   return (
     <div className="file-upload-container">
-      <div className={`upload-card ${isDragActive ? 'drag-active' : ''} ${isUploading ? 'uploading' : ''}`}>
-        <div {...getRootProps()} className="dropzone">
-          <input {...getInputProps()} />
-          
-          {isUploading ? (
-            <div className="upload-state">
-              <div className="spinner-container">
-                <div className="spinner-glow"></div>
-                <div className="spinner"></div>
+      {isUploading ? (
+        <div className="upload-card">
+          <div className="upload-processing">
+            <div className="processing-icon">⚡</div>
+            <div className="upload-title">Processing your file...</div>
+            <div className="upload-subtitle">AI is analyzing your content</div>
+            <div className="progress-wrap">
+              <div className="progress-bar">
+                <span style={{ width: `${Math.round(progress)}%` }}></span>
               </div>
-              <p>Processing your file...</p>
-              <div className="upload-progress">
-                <div 
-                  className="upload-progress-bar" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
+              <div className="progress-text">{Math.round(progress)}% complete</div>
             </div>
-          ) : (
-            <div className="upload-prompt">
-              <div className="upload-icon-container">
-                <div className="upload-icon-bg"></div>
-                <div className="upload-icon">
-                  {isDragActive ? '📁' : '📄'}
-                </div>
-              </div>
-              
-              {isDragActive ? (
-                <>
-                  <p className="primary-text">Drop it like it's hot! 🔥</p>
-                  <p className="secondary-text">Release to upload your file</p>
-                </>
-              ) : (
-                <>
-                  <p className="primary-text">Drag & drop your file here</p>
-                  <p className="secondary-text">or <span className="click-text">click to browse</span></p>
-                  <div className="file-types">
-                    <span className="file-type">📄 PDF</span>
-                    <span className="file-type">🖼️ JPG</span>
-                    <span className="file-type">📸 PNG</span>
-                  </div>
-                  <p className="size-limit">Maximum file size: 10MB</p>
-                </>
-              )}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="upload-card">
+          <div 
+            {...getRootProps()} 
+            className={`dropzone ${isDragActive ? 'drag-active' : ''}`}
+          >
+            <input {...getInputProps()} />
+            <div className="upload-content">
+              <div className="upload-icon">
+                {isDragActive ? '📁' : '🚀'}
+              </div>
+              <div className="upload-title">
+                {isDragActive ? 'Drop it here!' : 'Drag & drop your file here'}
+              </div>
+              <div className="upload-subtitle">
+                or <span className="click-text">click to browse</span>
+              </div>
+              <div className="format-types">
+                <span className="type-pill">📄 PDF</span>
+                <span className="type-pill">🖼️ JPG</span>
+                <span className="type-pill">📸 PNG</span>
+                <span className="type-pill">📏 Max 10MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
