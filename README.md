@@ -44,27 +44,28 @@ A modern, **AI-powered** web application that extracts and analyzes text from PD
 
 ## 🚀 Quick Start
 
-1. **Clone** the repo  
-git clone https://github.com/Yashuppal-15/social-media-content-analyzer.git
-cd social-media-content-analyzer
+1. **Clone the repository**  
+   ```
+   git clone https://github.com/Yashuppal-15/social-media-content-analyzer.git
+   cd social-media-content-analyzer
+   ```
 
+2. **Setup and run the Backend**  
+   ```
+   cd backend
+   npm install
+   cp .env.example .env
+   npm run dev
+   - Server will start at: `http://localhost:5000`
+   ```
 
-2. **Backend**  
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-
-Server: http://localhost:5000
-
-
-3. **Frontend**  
-cd ../frontend
-npm install
-npm start
-App: http://localhost:3000
-
-
+3. **Setup and run the Frontend**  
+   ```
+   cd ../frontend
+   npm install
+   npm start
+   - App will be available at: `http://localhost:3000`
+   ```
 
 4. **Environment Variables**  
 - **Backend (.env)**  
@@ -109,21 +110,7 @@ social-media-content-analyzer/
 
 ---
 
-## API Endpoints
-
-### GET /health
-- **Response**
-```json
-{ 
-  "status": "healthy", 
-  "uptime": 12345, 
-  "services": { 
-    "pdfParser": "available", 
-    "ocrEngine": "available", 
-    "engagementAnalyzer": "available" 
-  } 
-}
-
+## 📊 API Endpoints
 
 ### POST `/api/extract`
 
@@ -141,6 +128,19 @@ social-media-content-analyzer/
   "engagement": { "score": 85, "grade": "A", "suggestions": [...], "analysis": { ... } } 
 }
 
+
+### GET `/health`
+
+- **Response**  
+{ 
+  "status": "healthy", 
+  "uptime": 12345, 
+  "services": { 
+    "pdfParser": "available", 
+    "ocrEngine": "available", 
+    "engagementAnalyzer": "available" 
+  } 
+}
 
 ---
 
