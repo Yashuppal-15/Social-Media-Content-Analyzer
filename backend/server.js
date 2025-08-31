@@ -15,7 +15,8 @@ const app = express();
 // Configure CORS to allow both local dev and production origins
 const allowedOrigins = [
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  'https://social-media-content-analyzer-gray.vercel.app'
+  
 ];
 
 app.use(cors({
