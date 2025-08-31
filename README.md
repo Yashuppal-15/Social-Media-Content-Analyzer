@@ -8,6 +8,8 @@ A modern, **AI-powered** web application that extracts and analyzes text from PD
 
 [https://your-app-name.vercel.app](https://your-app-name.vercel.app)
 
+---
+
 ## 🛠️ Features
 
 ### Document & Image Processing
@@ -27,6 +29,8 @@ A modern, **AI-powered** web application that extracts and analyzes text from PD
 - **Smooth animations** and hover effects throughout  
 - **Clipboard & Download** buttons for extracted text  
 
+---
+
 ## ⚡️ Technology Stack
 
 | Frontend            | Backend                  | Deployment      |
@@ -35,6 +39,8 @@ A modern, **AI-powered** web application that extracts and analyzes text from PD
 | React Dropzone      | pdf-parse                | Render (backend) |
 | Custom CSS (glassmorphism) | Tesseract.js OCR       |                 |
 | Responsive design   | Multer file uploads      |                 |
+
+---
 
 ## 🚀 Quick Start
 
@@ -48,6 +54,7 @@ cd backend
 npm install
 cp .env.example .env
 npm run dev
+
 Server: http://localhost:5000
 
 
@@ -71,6 +78,7 @@ App: http://localhost:3000
   REACT_APP_API_URL=http://localhost:5000
   REACT_APP_NAME=Social Media Content Analyzer
   ```
+---
 
 ## 📁 Project Structure
 
@@ -99,8 +107,23 @@ social-media-content-analyzer/
 ├── README.md  
 └── .gitignore  
 
+---
 
-## 📊 API Endpoints
+## API Endpoints
+
+### GET /health
+- **Response**
+```json
+{ 
+  "status": "healthy", 
+  "uptime": 12345, 
+  "services": { 
+    "pdfParser": "available", 
+    "ocrEngine": "available", 
+    "engagementAnalyzer": "available" 
+  } 
+}
+
 
 ### POST `/api/extract`
 
@@ -109,51 +132,25 @@ social-media-content-analyzer/
   - `file`: PDF, JPG or PNG (max 10 MB)
 
 - **Response**  
-   {
-"success": true,
-"type": "pdf" | "image",
-"text": "Extracted text…",
-"stats": {
-"words": 123,
-"characters": 789,
-"paragraphs": 4,
-"lines": 12
-},
-"ocr": { // only for images
-"confidence": 90,
-"recognizedWords": 120,
-"lowConfidenceWords": 3
-},
-"engagement": {
-"score": 85,
-"grade": "A",
-"suggestions": [ … ],
-"analysis": { … }
-}
+{ 
+  "success": true, 
+  "type": "pdf" | "image", 
+  "text": "Extracted text…", 
+  "stats": { "words": 123, "characters": 789, "paragraphs": 4, "lines": 12 }, 
+  "ocr": { "confidence": 90, "recognizedWords": 120, "lowConfidenceWords": 3 }, 
+  "engagement": { "score": 85, "grade": "A", "suggestions": [...], "analysis": { ... } } 
 }
 
 
 ---
-
-### GET `/health`
-
-- **Response**  
-{
-"status": "healthy",
-"uptime": 12345,
-"services": {
-"pdfParser": "available",
-"ocrEngine": "available",
-"engagementAnalyzer": "available"
-}
-}
-
 
 ## ✅ Deployment
 
 - **Frontend** on Vercel: automatic from `frontend/`  
 - **Backend** on Render: `npm start` from `backend/`  
 - Set production env variables accordingly  
+
+---
 
 ## 🔮 Future Enhancements
 
