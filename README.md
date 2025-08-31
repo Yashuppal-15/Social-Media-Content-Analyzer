@@ -48,7 +48,6 @@ cd backend
 npm install
 cp .env.example .env
 npm run dev
-
 Server: http://localhost:5000
 
 
@@ -56,7 +55,6 @@ Server: http://localhost:5000
 cd ../frontend
 npm install
 npm start
-
 App: http://localhost:3000
 
 
@@ -75,53 +73,80 @@ App: http://localhost:3000
   ```
 
 ## 📁 Project Structure
-social-media-content-analyzer/
-├── frontend/ # React + TypeScript SPA
-│ ├── public/
-│ ├── src/
-│ │ ├── components/ # FileUpload, ResultsDisplay
-│ │ ├── App.tsx
-│ │ └── App.css
-│ ├── .env.production
-│ └── package.json
-├── backend/ # Express API
-│ ├── services/ # pdfService, ocrService, engagementService
-│ ├── uploads/
-│ ├── server.js
-│ ├── .env.example
-│ └── package.json
-├── README.md
-└── .gitignore
+
+social-media-content-analyzer/  
+├── backend/                  # Express API  
+│   ├── services/             # Business logic  
+│   │   ├── pdfService.js     # PDF parsing  
+│   │   ├── ocrService.js     # OCR processing  
+│   │   └── engagementService.js  
+│   ├── uploads/              # Temporary file storage  
+│   ├── server.js             # Main server entry  
+│   ├── .env.example          # Environment vars template  
+│   └── package.json  
+├── frontend/                 # React + TypeScript SPA  
+│   ├── public/               # Static assets  
+│   ├── src/  
+│   │   ├── components/       # Reusable UI components  
+│   │   │   ├── FileUpload.tsx  
+│   │   │   ├── FileUpload.css  
+│   │   │   ├── ResultsDisplay.tsx  
+│   │   │   └── ResultsDisplay.css  
+│   │   ├── App.tsx  
+│   │   └── App.css  
+│   ├── .env.production       # Frontend env vars  
+│   └── package.json  
+├── README.md  
+└── .gitignore  
 
 
 ## 📊 API Endpoints
 
 ### POST `/api/extract`
-- **Request**: `multipart/form-data` with `file` field (PDF/JPG/PNG)  
-- **Response**:  
-{
+
+- **Request**  
+  `Content-Type: multipart/form-data`  
+  - `file`: PDF, JPG or PNG (max 10 MB)
+
+- **Response**  
+   {
 "success": true,
-"type": "pdf"|"image",
-"text": "Extracted text...",
-"stats": { "words": 123, "characters": 789, "paragraphs": 4, "lines": 12 },
-"ocr": { "confidence": 90, "recognizedWords": 120, "lowConfidenceWords": 3 },
+"type": "pdf" | "image",
+"text": "Extracted text…",
+"stats": {
+"words": 123,
+"characters": 789,
+"paragraphs": 4,
+"lines": 12
+},
+"ocr": { // only for images
+"confidence": 90,
+"recognizedWords": 120,
+"lowConfidenceWords": 3
+},
 "engagement": {
 "score": 85,
 "grade": "A",
-"suggestions": [ /* array of suggestion objects / ],
-"analysis": { / detailed analysis metrics */ }
+"suggestions": [ … ],
+"analysis": { … }
 }
 }
 
+
+---
 
 ### GET `/health`
-- **Response**:
+
+- **Response**  
 {
 "status": "healthy",
 "uptime": 12345,
-"services": { "pdfParser": "available", "ocrEngine": "available", "engagementAnalyzer": "available" }
+"services": {
+"pdfParser": "available",
+"ocrEngine": "available",
+"engagementAnalyzer": "available"
 }
-
+}
 
 
 ## ✅ Deployment
